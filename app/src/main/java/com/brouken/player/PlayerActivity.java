@@ -39,6 +39,7 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Rational;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -60,6 +61,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
@@ -138,6 +140,7 @@ public class PlayerActivity extends Activity {
     private boolean isScaling = false;
     private boolean isScaleStarting = false;
     private float scaleFactor = 1.0f;
+    private float vidAspectRatio;
 
     private static final int REQUEST_CHOOSER_VIDEO = 1;
     private static final int REQUEST_CHOOSER_SUBTITLE = 2;
@@ -408,27 +411,54 @@ public class PlayerActivity extends Activity {
 
         buttonAspectRatio = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
         buttonAspectRatio.setId(Integer.MAX_VALUE - 100);
-        buttonAspectRatio.setContentDescription(getString(R.string.button_crop));
-        updatebuttonAspectRatioIcon();
-        buttonAspectRatio.setOnClickListener(view -> {
-            playerView.setScale(1.f);
-            if (playerView.getResizeMode() == AspectRatioFrameLayout.RESIZE_MODE_FIT) {
-                playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-                Utils.showText(playerView, getString(R.string.video_resize_crop));
-            } else {
-                // Default mode
+        buttonAspectRatio.setImageResource(R.drawable.ic_aspect_ratio_24dp);
+        buttonAspectRatio.setContentDescription(getString(R.string.button_aspect_ratio));
+        
+        final PopupMenu popupMenu = new PopupMenu(PlayerActivity.this, buttonAspectRatio, Gravity.TOP, R.attr.popupMenuStyle, 0);
+        popupMenu.getMenuInflater().inflate(R.menu.aspect_ratio, popupMenu.getMenu());
+
+        popupMenu.setOnMenuItemClickListener(item->{
+            AspectRatioFrameLayout contentFrame = playerView.findViewById(R.id.exo_content_frame);
+            if(contentFrame !=null){
                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-                Utils.showText(playerView, getString(R.string.video_resize_fit));
+                String title = item.getTitle().toString();
+
+                if(title.equals(getString(R.string.video_resize_fit))){
+                    Format format = player.getVideoFormat();
+                    float orgAspectRatio = Utils.getRational(format).floatValue();
+                    if(format !=null){
+                        // set default aspect ratio
+                        vidAspectRatio = orgAspectRatio;
+                        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+                        Utils.showText(playerView, getString(R.string.video_resize_fit));
+                    }
+                }else{
+                    String[] parts = title.split(":");
+                    if(parts.length == 2){
+                        try{
+                            float w = Float.parseFloat(parts[0]);
+                            float h = Float.parseFloat(parts[1]);
+                            if(w >0 && h >0){
+                                vidAspectRatio = w/h;
+                                playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+                                Utils.showText(playerView, title);
+                            }
+                        }catch (NumberFormatException e){
+                        }
+                    }
+                }
+                contentFrame.setAspectRatio(vidAspectRatio);
             }
-            updatebuttonAspectRatioIcon();
+            return true;
+        });
+
+        buttonAspectRatio.setOnClickListener(view -> {
+            popupMenu.show();
             resetHideCallbacks();
         });
+
         if (isTvBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            buttonAspectRatio.setOnLongClickListener(v -> {
-                scaleStart();
-                updatebuttonAspectRatioIcon();
-                return true;
-            });
+            // Todo: remove long press scaling later on
         }
         buttonRotation = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
         buttonRotation.setContentDescription(getString(R.string.button_rotate));
@@ -455,25 +485,6 @@ public class PlayerActivity extends Activity {
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         titleView.setTextDirection(View.TEXT_DIRECTION_LOCALE);
         centerView.addView(titleView);
-
-        titleView.setOnLongClickListener(view -> {
-            // Prevent FileUriExposedException
-            if (mPrefs.mediaUri != null && ContentResolver.SCHEME_FILE.equals(mPrefs.mediaUri.getScheme())) {
-                return false;
-            }
-
-            final Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, mPrefs.mediaUri);
-            if (mPrefs.mediaType == null)
-                shareIntent.setType("video/*");
-            else
-                shareIntent.setType(mPrefs.mediaType);
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            // Start without intent chooser to allow any target to be set as default
-            startActivity(shareIntent);
-
-            return true;
-        });
 
         if (Build.VERSION.SDK_INT >= 35) {
             getWindow().setNavigationBarContrastEnforced(false);
@@ -563,7 +574,7 @@ public class PlayerActivity extends Activity {
             e.printStackTrace();
         }
 
-        findViewById(R.id.delete).setOnClickListener(view -> askDeleteMedia());
+        findViewById(R.id.delete).setOnClickListener(null);
 
         findViewById(R.id.next).setOnClickListener(view -> {
             if (!isTvBox && mPrefs.askScope) {
@@ -619,9 +630,6 @@ public class PlayerActivity extends Activity {
         controls.addView(buttonOpen);
         controls.addView(exoSubtitle);
         controls.addView(buttonAspectRatio);
-        if (Utils.isPiPSupported(this) && buttonPiP != null) {
-            controls.addView(buttonPiP);
-        }
         if (mPrefs.repeatToggle) {
             controls.addView(exoRepeat);
         }
@@ -843,7 +851,8 @@ public class PlayerActivity extends Activity {
                 return true;
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                Utils.adjustVolume(this, mAudioManager, playerView, keyCode == KeyEvent.KEYCODE_VOLUME_UP, event.getRepeatCount() == 0, true);
+                Utils.adjustVolume(this, mAudioManager, playerView, keyCode == KeyEvent.KEYCODE_VOLUME_UP,
+                        event.getRepeatCount() == 0, true);
                 return true;
             case KeyEvent.KEYCODE_BUTTON_START:
             case KeyEvent.KEYCODE_BUTTON_A:
@@ -878,7 +887,8 @@ public class PlayerActivity extends Activity {
                         seekTo = 0;
                     player.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
                     player.seekTo(seekTo);
-                    final String message = Utils.formatMilisSign(seekTo - playerView.keySeekStart) + "\n" + Utils.formatMilis(seekTo);
+                    final String message = Utils.formatMilisSign(seekTo - playerView.keySeekStart) + "\n"
+                            + Utils.formatMilis(seekTo);
                     playerView.setCustomErrorMessage(message);
                     return true;
                 }
@@ -900,7 +910,8 @@ public class PlayerActivity extends Activity {
                         seekTo = seekMax;
                     PlayerActivity.player.setSeekParameters(SeekParameters.NEXT_SYNC);
                     player.seekTo(seekTo);
-                    final String message = Utils.formatMilisSign(seekTo - playerView.keySeekStart) + "\n" + Utils.formatMilis(seekTo);
+                    final String message = Utils.formatMilisSign(seekTo - playerView.keySeekStart) + "\n"
+                            + Utils.formatMilis(seekTo);
                     playerView.setCustomErrorMessage(message);
                     return true;
                 }
@@ -1041,7 +1052,8 @@ public class PlayerActivity extends Activity {
                     }
                 }
             };
-            ContextCompat.registerReceiver(this, mReceiver, new IntentFilter(ACTION_MEDIA_CONTROL), ContextCompat.RECEIVER_EXPORTED);
+            ContextCompat.registerReceiver(this, mReceiver, new IntentFilter(ACTION_MEDIA_CONTROL),
+                    ContextCompat.RECEIVER_EXPORTED);
         } else {
             setSubtitleTextSize();
             if (mPrefs.resizeMode == AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
@@ -1103,7 +1115,8 @@ public class PlayerActivity extends Activity {
                             uriAlreadyTaken = true;
                         } else {
                             try {
-                                contentResolver.releasePersistableUriPermission(persistedUri.getUri(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                contentResolver.releasePersistableUriPermission(persistedUri.getUri(),
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             } catch (SecurityException e) {
                                 e.printStackTrace();
                             }
@@ -1144,7 +1157,8 @@ public class PlayerActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 final Uri uri = data.getData();
                 try {
-                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    getContentResolver().takePersistableUriPermission(uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                     mPrefs.updateScope(uri);
                     mPrefs.markScopeAsked();
                     searchSubtitles();
@@ -1159,7 +1173,8 @@ public class PlayerActivity extends Activity {
             super.onActivityResult(requestCode, resultCode, data);
         }
 
-        // Init here because onStart won't follow when app was only paused when file chooser was shown
+        // Init here because onStart won't follow when app was only paused when file
+        // chooser was shown
         // (for example pop-up file chooser on tablets)
         if (resultCode == RESULT_OK && alive) {
             initializePlayer();
@@ -1189,39 +1204,35 @@ public class PlayerActivity extends Activity {
                 .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true));
         if (mPrefs.tunneling) {
             trackSelector.setParameters(trackSelector.buildUponParameters()
-                    .setTunnelingEnabled(true)
-            );
+                    .setTunnelingEnabled(true));
         }
         switch (mPrefs.languageAudio) {
             case Prefs.TRACK_DEFAULT:
                 break;
             case Prefs.TRACK_DEVICE:
                 trackSelector.setParameters(trackSelector.buildUponParameters()
-                        .setPreferredAudioLanguages(Utils.getDeviceLanguages())
-                );
+                        .setPreferredAudioLanguages(Utils.getDeviceLanguages()));
                 break;
             default:
                 trackSelector.setParameters(trackSelector.buildUponParameters()
-                        .setPreferredAudioLanguages(mPrefs.languageAudio)
-                );
+                        .setPreferredAudioLanguages(mPrefs.languageAudio));
         }
         final CaptioningManager captioningManager = (CaptioningManager) getSystemService(Context.CAPTIONING_SERVICE);
         if (!captioningManager.isEnabled()) {
             trackSelector.setParameters(trackSelector.buildUponParameters()
-                    .setIgnoredTextSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-            );
+                    .setIgnoredTextSelectionFlags(C.SELECTION_FLAG_DEFAULT));
         }
         Locale locale = captioningManager.getLocale();
         if (locale != null) {
             trackSelector.setParameters(trackSelector.buildUponParameters()
-                    .setPreferredTextLanguage(locale.getISO3Language())
-            );
+                    .setPreferredTextLanguage(locale.getISO3Language()));
         }
         // https://github.com/google/ExoPlayer/issues/8571
         DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
                 .setTsExtractorTimestampSearchBytes(1500 * TsExtractor.TS_PACKET_SIZE);
-        @SuppressLint("WrongConstant") RenderersFactory renderersFactory = new DefaultRenderersFactory(this)
+        @SuppressLint("WrongConstant")
+        RenderersFactory renderersFactory = new DefaultRenderersFactory(this)
                 .setExtensionRendererMode(mPrefs.decoderPriority)
                 .setMapDV7ToHevc(mPrefs.mapDV7ToHevc);
 
@@ -1237,7 +1248,8 @@ public class PlayerActivity extends Activity {
                     headers.put("Authorization", "Basic " + Base64.encodeToString(userInfo.getBytes(), Base64.NO_WRAP));
                     DefaultHttpDataSource.Factory defaultHttpDataSourceFactory = new DefaultHttpDataSource.Factory();
                     defaultHttpDataSourceFactory.setDefaultRequestProperties(headers);
-                    playerBuilder.setMediaSourceFactory(new DefaultMediaSourceFactory(defaultHttpDataSourceFactory, extractorsFactory));
+                    playerBuilder.setMediaSourceFactory(
+                            new DefaultMediaSourceFactory(defaultHttpDataSourceFactory, extractorsFactory));
                 }
             }
         }
@@ -1288,7 +1300,6 @@ public class PlayerActivity extends Activity {
             } else {
                 playerView.setScale(1.f);
             }
-            updatebuttonAspectRatioIcon();
 
             MediaItem.Builder mediaItemBuilder = new MediaItem.Builder()
                     .setUri(mPrefs.mediaUri)
@@ -1309,7 +1320,8 @@ public class PlayerActivity extends Activity {
             if (apiAccess && apiSubs.size() > 0) {
                 mediaItemBuilder.setSubtitleConfigurations(apiSubs);
             } else if (mPrefs.subtitleUri != null && Utils.fileExists(this, mPrefs.subtitleUri)) {
-                MediaItem.SubtitleConfiguration subtitle = SubtitleUtils.buildSubtitle(this, mPrefs.subtitleUri, null, true);
+                MediaItem.SubtitleConfiguration subtitle = SubtitleUtils.buildSubtitle(this, mPrefs.subtitleUri, null,
+                        true);
                 mediaItemBuilder.setSubtitleConfigurations(Collections.singletonList(subtitle));
             }
             player.setMediaItem(mediaItemBuilder.build(), mPrefs.getPosition());
@@ -1342,7 +1354,7 @@ public class PlayerActivity extends Activity {
 
             updateButtons(true);
 
-            ((DoubleTapPlayerView)playerView).setDoubleTapEnabled(true);
+            ((DoubleTapPlayerView) playerView).setDoubleTapEnabled(true);
 
             if (!apiAccess) {
                 if (nextUriThread != null) {
@@ -1359,7 +1371,7 @@ public class PlayerActivity extends Activity {
             }
 
             player.setHandleAudioBecomingNoisy(!isTvBox);
-//            mediaSession.setActive(true);
+            // mediaSession.setActive(true);
         } else {
             playerView.showController();
         }
@@ -1406,7 +1418,7 @@ public class PlayerActivity extends Activity {
         if (player != null) {
             notifyAudioSessionUpdate(false);
 
-//            mediaSession.setActive(false);
+            // mediaSession.setActive(false);
             if (mediaSession != null) {
                 mediaSession.release();
             }
@@ -1443,9 +1455,11 @@ public class PlayerActivity extends Activity {
 
             if (Utils.isPiPSupported(PlayerActivity.this)) {
                 if (isPlaying) {
-                    updatePictureInPictureActions(R.drawable.ic_pause_24dp, R.string.exo_controls_pause_description, CONTROL_TYPE_PAUSE, REQUEST_PAUSE);
+                    updatePictureInPictureActions(R.drawable.ic_pause_24dp, R.string.exo_controls_pause_description,
+                            CONTROL_TYPE_PAUSE, REQUEST_PAUSE);
                 } else {
-                    updatePictureInPictureActions(R.drawable.ic_play_arrow_24dp, R.string.exo_controls_play_description, CONTROL_TYPE_PLAY, REQUEST_PLAY);
+                    updatePictureInPictureActions(R.drawable.ic_play_arrow_24dp, R.string.exo_controls_play_description,
+                            CONTROL_TYPE_PLAY, REQUEST_PLAY);
                 }
             }
 
@@ -1497,9 +1511,11 @@ public class PlayerActivity extends Activity {
                     if (format != null) {
                         if (!isTvBox && mPrefs.orientation == Utils.Orientation.VIDEO) {
                             if (Utils.isPortrait(format)) {
-                                PlayerActivity.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                                PlayerActivity.this
+                                        .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
                             } else {
-                                PlayerActivity.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                                PlayerActivity.this
+                                        .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
                             }
                             updateButtonRotation();
                         }
@@ -1609,7 +1625,8 @@ public class PlayerActivity extends Activity {
 
     boolean useMediaStore() {
         final int targetSdkVersion = getApplicationContext().getApplicationInfo().targetSdkVersion;
-        return (isTvBox && Build.VERSION.SDK_INT >= 30 && targetSdkVersion >= 30 && mPrefs.fileAccess.equals("auto")) || mPrefs.fileAccess.equals("mediastore");
+        return (isTvBox && Build.VERSION.SDK_INT >= 30 && targetSdkVersion >= 30 && mPrefs.fileAccess.equals("auto"))
+                || mPrefs.fileAccess.equals("mediastore");
     }
 
     private void openFile(Uri pickerInitialUri) {
@@ -1644,7 +1661,8 @@ public class PlayerActivity extends Activity {
     private void loadSubtitleFile(Uri pickerInitialUri) {
         Toast.makeText(PlayerActivity.this, R.string.open_subtitles, Toast.LENGTH_SHORT).show();
         final int targetSdkVersion = getApplicationContext().getApplicationInfo().targetSdkVersion;
-        if ((isTvBox && Build.VERSION.SDK_INT >= 30 && targetSdkVersion >= 30 && mPrefs.fileAccess.equals("auto")) || mPrefs.fileAccess.equals("mediastore")) {
+        if ((isTvBox && Build.VERSION.SDK_INT >= 30 && targetSdkVersion >= 30 && mPrefs.fileAccess.equals("auto"))
+                || mPrefs.fileAccess.equals("mediastore")) {
             Intent intent = new Intent(this, MediaStoreChooserActivity.class);
             intent.putExtra(MediaStoreChooserActivity.SUBTITLES, true);
             startActivityForResult(intent, REQUEST_CHOOSER_SUBTITLE_MEDIASTORE);
@@ -1705,7 +1723,7 @@ public class PlayerActivity extends Activity {
     }
 
     private TrackGroup getTrackGroupFromFormatId(int trackType, String id) {
-        if ((id == null && trackType == C.TRACK_TYPE_AUDIO ) || player == null) {
+        if ((id == null && trackType == C.TRACK_TYPE_AUDIO) || player == null) {
             return null;
         }
         for (Tracks.Group group : player.getCurrentTracks().getGroups()) {
@@ -1725,7 +1743,8 @@ public class PlayerActivity extends Activity {
             if (trackSelector == null) {
                 return;
             }
-            trackSelector.setParameters(trackSelector.buildUponParameters().setDisabledTextTrackSelectionFlags(C.SELECTION_FLAG_DEFAULT | C.SELECTION_FLAG_FORCED));
+            trackSelector.setParameters(trackSelector.buildUponParameters()
+                    .setDisabledTextTrackSelectionFlags(C.SELECTION_FLAG_DEFAULT | C.SELECTION_FLAG_FORCED));
         }
 
         TrackGroup subtitleGroup = getTrackGroupFromFormatId(C.TRACK_TYPE_TEXT, subtitleId);
@@ -1733,7 +1752,8 @@ public class PlayerActivity extends Activity {
 
         TrackSelectionParameters.Builder overridesBuilder = new TrackSelectionParameters.Builder(this);
         TrackSelectionOverride trackSelectionOverride = null;
-        final List<Integer> tracks = new ArrayList<>(); tracks.add(0);
+        final List<Integer> tracks = new ArrayList<>();
+        tracks.add(0);
         if (subtitleGroup != null) {
             trackSelectionOverride = new TrackSelectionOverride(subtitleGroup, tracks);
             overridesBuilder.addOverride(trackSelectionOverride);
@@ -1744,7 +1764,8 @@ public class PlayerActivity extends Activity {
         }
 
         if (player != null) {
-            TrackSelectionParameters.Builder trackSelectionParametersBuilder = player.getTrackSelectionParameters().buildUpon();
+            TrackSelectionParameters.Builder trackSelectionParametersBuilder = player.getTrackSelectionParameters()
+                    .buildUpon();
             if (trackSelectionOverride != null) {
                 trackSelectionParametersBuilder.setOverrideForType(trackSelectionOverride);
             }
@@ -1802,7 +1823,7 @@ public class PlayerActivity extends Activity {
                 size = SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * subtitlesScale;
             } else {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
-                float ratio = ((float)metrics.heightPixels / (float)metrics.widthPixels);
+                float ratio = ((float) metrics.heightPixels / (float) metrics.widthPixels);
                 if (ratio < 1)
                     ratio = 1 / ratio;
                 size = SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * subtitlesScale / ratio;
@@ -1852,11 +1873,13 @@ public class PlayerActivity extends Activity {
     }
 
     @TargetApi(26)
-    boolean updatePictureInPictureActions(final int iconId, final int resTitle, final int controlType, final int requestCode) {
+    boolean updatePictureInPictureActions(final int iconId, final int resTitle, final int controlType,
+            final int requestCode) {
         try {
             final ArrayList<RemoteAction> actions = new ArrayList<>();
             final PendingIntent intent = PendingIntent.getBroadcast(PlayerActivity.this, requestCode,
-                    new Intent(ACTION_MEDIA_CONTROL).putExtra(EXTRA_CONTROL_TYPE, controlType), PendingIntent.FLAG_IMMUTABLE);
+                    new Intent(ACTION_MEDIA_CONTROL).putExtra(EXTRA_CONTROL_TYPE, controlType),
+                    PendingIntent.FLAG_IMMUTABLE);
             final Icon icon = Icon.createWithResource(PlayerActivity.this, iconId);
             final String title = getString(resTitle);
             actions.add(new RemoteAction(icon, title, title, intent));
@@ -1865,7 +1888,8 @@ public class PlayerActivity extends Activity {
             return true;
         } catch (IllegalStateException e) {
             // On Samsung devices with Talkback active:
-            // Caused by: java.lang.IllegalStateException: setPictureInPictureParams: Device doesn't support picture-in-picture mode.
+            // Caused by: java.lang.IllegalStateException: setPictureInPictureParams: Device
+            // doesn't support picture-in-picture mode.
             e.printStackTrace();
         }
         return false;
@@ -1994,7 +2018,8 @@ public class PlayerActivity extends Activity {
                     video = SubtitleUtils.findUriInScope(this, mPrefs.scopeUri, mPrefs.mediaUri);
                 } else {
                     // Slow search based on matching metadata, no path in uri
-                    // Provider "com.android.providers.media.documents" when using "Videos" tab in file picker
+                    // Provider "com.android.providers.media.documents" when using "Videos" tab in
+                    // file picker
                     DocumentFile fileScope = DocumentFile.fromTreeUri(this, mPrefs.scopeUri);
                     DocumentFile fileMedia = DocumentFile.fromSingleUri(this, mPrefs.mediaUri);
                     video = SubtitleUtils.findDocInScope(fileScope, fileMedia);
@@ -2033,7 +2058,8 @@ public class PlayerActivity extends Activity {
                     video = SubtitleUtils.findUriInScope(this, mPrefs.scopeUri, mPrefs.mediaUri);
                 } else {
                     // Slow search based on matching metadata, no path in uri
-                    // Provider "com.android.providers.media.documents" when using "Videos" tab in file picker
+                    // Provider "com.android.providers.media.documents" when using "Videos" tab in
+                    // file picker
                     DocumentFile fileScope = DocumentFile.fromTreeUri(this, mPrefs.scopeUri);
                     DocumentFile fileMedia = DocumentFile.fromSingleUri(this, mPrefs.mediaUri);
                     video = SubtitleUtils.findDocInScope(fileScope, fileMedia);
@@ -2063,8 +2089,7 @@ public class PlayerActivity extends Activity {
     void askForScope(boolean loadSubtitlesOnCancel, boolean skipToNextOnCancel) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(PlayerActivity.this);
         builder.setMessage(String.format(getString(R.string.request_scope), getString(R.string.app_name)));
-        builder.setPositiveButton(android.R.string.ok, (dialogInterface, i) -> requestDirectoryAccess()
-        );
+        builder.setPositiveButton(android.R.string.ok, (dialogInterface, i) -> requestDirectoryAccess());
         builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
             mPrefs.markScopeAsked();
             if (loadSubtitlesOnCancel) {
@@ -2105,7 +2130,7 @@ public class PlayerActivity extends Activity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onUserLeaveHint() {
-        if (mPrefs!= null && mPrefs.autoPiP && player != null && player.isPlaying() && Utils.isPiPSupported(this))
+        if (mPrefs != null && mPrefs.autoPiP && player != null && player.isPlaying() && Utils.isPiPSupported(this))
             enterPiP();
         else
             super.onUserLeaveHint();
@@ -2114,8 +2139,10 @@ public class PlayerActivity extends Activity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void enterPiP() {
         final AppOpsManager appOpsManager = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        if (AppOpsManager.MODE_ALLOWED != appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, android.os.Process.myUid(), getPackageName())) {
-            final Intent intent = new Intent("android.settings.PICTURE_IN_PICTURE_SETTINGS", Uri.fromParts("package", getPackageName(), null));
+        if (AppOpsManager.MODE_ALLOWED != appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE,
+                android.os.Process.myUid(), getPackageName())) {
+            final Intent intent = new Intent("android.settings.PICTURE_IN_PICTURE_SETTINGS",
+                    Uri.fromParts("package", getPackageName(), null));
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
             }
@@ -2136,71 +2163,39 @@ public class PlayerActivity extends Activity {
             // TODO: Test/disable on Android 11+
             final View videoSurfaceView = playerView.getVideoSurfaceView();
             if (videoSurfaceView instanceof SurfaceView) {
-                ((SurfaceView)videoSurfaceView).getHolder().setFixedSize(format.width, format.height);
+                ((SurfaceView) videoSurfaceView).getHolder().setFixedSize(format.width, format.height);
             }
 
             Rational rational = Utils.getRational(format);
             if (Build.VERSION.SDK_INT >= 33 &&
                     getPackageManager().hasSystemFeature(FEATURE_EXPANDED_PICTURE_IN_PICTURE) &&
-                    (rational.floatValue() > rationalLimitWide.floatValue() || rational.floatValue() < rationalLimitTall.floatValue())) {
-                ((PictureInPictureParams.Builder)mPictureInPictureParamsBuilder).setExpandedAspectRatio(rational);
+                    (rational.floatValue() > rationalLimitWide.floatValue()
+                            || rational.floatValue() < rationalLimitTall.floatValue())) {
+                ((PictureInPictureParams.Builder) mPictureInPictureParamsBuilder).setExpandedAspectRatio(rational);
             }
             if (rational.floatValue() > rationalLimitWide.floatValue())
                 rational = rationalLimitWide;
             else if (rational.floatValue() < rationalLimitTall.floatValue())
                 rational = rationalLimitTall;
 
-            ((PictureInPictureParams.Builder)mPictureInPictureParamsBuilder).setAspectRatio(rational);
+            ((PictureInPictureParams.Builder) mPictureInPictureParamsBuilder).setAspectRatio(rational);
         }
-        enterPictureInPictureMode(((PictureInPictureParams.Builder)mPictureInPictureParamsBuilder).build());
+        enterPictureInPictureMode(((PictureInPictureParams.Builder) mPictureInPictureParamsBuilder).build());
     }
 
     void setEndControlsVisible(boolean visible) {
-        final int deleteVisible = (visible && haveMedia && Utils.isDeletable(this, mPrefs.mediaUri)) ? View.VISIBLE : View.INVISIBLE;
-        final int nextVisible = (visible && haveMedia && (nextUri != null || (mPrefs.askScope && !isTvBox))) ? View.VISIBLE : View.INVISIBLE;
-        findViewById(R.id.delete).setVisibility(deleteVisible);
+        final int nextVisible = (visible && haveMedia && (nextUri != null || (mPrefs.askScope && !isTvBox)))
+                ? View.VISIBLE
+                : View.INVISIBLE;
         findViewById(R.id.next).setVisibility(nextVisible);
-    }
-
-    void askDeleteMedia() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(PlayerActivity.this);
-        builder.setMessage(getString(R.string.delete_query));
-        builder.setPositiveButton(R.string.delete_confirmation, (dialogInterface, i) -> {
-            releasePlayer();
-            deleteMedia();
-            if (nextUri == null) {
-                haveMedia = false;
-                setEndControlsVisible(false);
-                playerView.setControllerShowTimeoutMs(-1);
-            } else {
-                skipToNext();
-            }
-        });
-        builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {});
-        final AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    void deleteMedia() {
-        try {
-            if (ContentResolver.SCHEME_CONTENT.equals(mPrefs.mediaUri.getScheme())) {
-                DocumentsContract.deleteDocument(getContentResolver(), mPrefs.mediaUri);
-            } else if (ContentResolver.SCHEME_FILE.equals(mPrefs.mediaUri.getScheme())) {
-                final File file = new File(mPrefs.mediaUri.getSchemeSpecificPart());
-                if (file.canWrite()) {
-                    file.delete();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void dispatchPlayPause() {
         if (player == null)
             return;
 
-        @Player.State int state = player.getPlaybackState();
+        @Player.State
+        int state = player.getPlaybackState();
         if (state == Player.STATE_IDLE || state == Player.STATE_ENDED || !player.getPlayWhenReady()) {
             shortControllerTimeout = true;
             androidx.media3.common.util.Util.handlePlayButtonAction(player);
@@ -2245,18 +2240,18 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    private void scaleStart() {
-        isScaling = true;
-        if (playerView.getResizeMode() != AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
-            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-        }
-        scaleFactor = playerView.getVideoSurfaceView().getScaleX();
-        playerView.removeCallbacks(playerView.textClearRunnable);
-        playerView.clearIcon();
-        playerView.setCustomErrorMessage((int)(scaleFactor * 100) + "%");
-        playerView.hideController();
-        isScaleStarting = true;
-    }
+//    private void scaleStart() {
+//        isScaling = true;
+//        if (playerView.getResizeMode() != AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
+//            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+//        }
+//        scaleFactor = playerView.getVideoSurfaceView().getScaleX();
+//        playerView.removeCallbacks(playerView.textClearRunnable);
+//        playerView.clearIcon();
+//        playerView.setCustomErrorMessage((int) (scaleFactor * 100) + "%");
+//        playerView.hideController();
+//        isScaleStarting = true;
+//    }
 
     private void scale(boolean up) {
         if (up) {
@@ -2266,7 +2261,7 @@ public class PlayerActivity extends Activity {
         }
         scaleFactor = Utils.normalizeScaleFactor(scaleFactor, playerView.getScaleFit());
         playerView.setScale(scaleFactor);
-        playerView.setCustomErrorMessage((int)(scaleFactor * 100) + "%");
+        playerView.setCustomErrorMessage((int) (scaleFactor * 100) + "%");
     }
 
     private void scaleEnd() {
@@ -2278,15 +2273,6 @@ public class PlayerActivity extends Activity {
         if (Math.abs(playerView.getScaleFit() - scaleFactor) < 0.01 / 2) {
             playerView.setScale(1.f);
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-        }
-        updatebuttonAspectRatioIcon();
-    }
-
-    private void updatebuttonAspectRatioIcon() {
-        if (playerView.getResizeMode() == AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
-            buttonAspectRatio.setImageResource(R.drawable.ic_fit_screen_24dp);
-        } else {
-            buttonAspectRatio.setImageResource(R.drawable.ic_aspect_ratio_24dp);
         }
     }
 

@@ -1,0 +1,35 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/aspect_ratio_fit"
+        android:title="@string/video_resize_fit" />
+    <item
+        android:id="@+id/aspect_ratio_1_1"
+        android:title="1:1" />
+    <item
+        android:id="@+id/aspect_ratio_3_2"
+        android:title="3:2" />
+    <item
+        android:id="@+id/aspect_ratio_4_3"
+        android:title="4:3" />
+    <item
+        android:id="@+id/aspect_ratio_5_4"
+        android:title="5:4" />
+    <item
+        android:id="@+id/aspect_ratio_11_8"
+        android:title="11:8" />
+    <item
+        android:id="@+id/aspect_ratio_14_9"
+        android:title="14:9" />
+    <item
+        android:id="@+id/aspect_ratio_14_10"
+        android:title="14:10" />
+    <item
+        android:id="@+id/aspect_ratio_16_9"
+        android:title="16:9" />
+    <item
+        android:id="@+id/aspect_ratio_16_10"
+        android:title="16:10" />
+    <item
+        android:id="@+id/aspect_ratio_21_9"
+        android:title="21:9" />
+</menu>
