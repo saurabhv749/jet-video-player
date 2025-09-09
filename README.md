@@ -1,14 +1,9 @@
-# Just (Video) Player 
+# 🚀 JET Video Player 
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/moneytoo/Player/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3DGoogle%2520Play%26m%3Dv%24version)](https://play.google.com/store/apps/details?id=com.brouken.player)
-[![F-Droid](https://img.shields.io/f-droid/v/com.brouken.player.svg?logo=f-droid&label=F-Droid&cacheSeconds=3600)](https://f-droid.org/packages/com.brouken.player/)
-[![GitHub all releases](https://img.shields.io/github/downloads/moneytoo/Player/total?logo=github&cacheSeconds=3600)](https://github.com/moneytoo/Player/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3Ddownloads%26m%3D%24totalinstalls)](https://play.google.com/store/apps/details?id=com.brouken.player)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3Drating%26m%3D%25E2%2598%2585%2520%24rating)](https://play.google.com/store/apps/details?id=com.brouken.player)
+This repo is cloned from [moneytoo/Player](https://github.com/moneytoo/Player)
+
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/saurabhv749/jet-video-player/releases/latest)
 [![Media3](https://img.shields.io/badge/Media3-1.8.0-007ec6?cacheSeconds=3600)](https://github.com/androidx/media/releases/tag/1.8.0)
-[![Weblate project translated](https://img.shields.io/weblate/progress/just-player?logo=weblate&logoColor=white&cacheSeconds=36000)](https://hosted.weblate.org/engage/just-player/)
-[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/JustPlayer?label=r%2FJustPlayer&logo=reddit&logoColor=white&cacheSeconds=3600)](https://www.reddit.com/r/JustPlayer/)
 
 Android video player based on [Media3](https://github.com/androidx/media) (formerly [ExoPlayer](https://github.com/google/ExoPlayer)), compatible with Android 5+ and Android TV.
 
@@ -40,10 +35,10 @@ AC-4 audio is supported on devices providing such system decoder (e.g. Samsung G
  * Vertical swipe to change brightness (left) / volume (right)
  * Pinch to zoom (Android 7+)
  * PiP (Picture in Picture) on Android 8+ (resizable on Android 11+)
- * Resize (fit/crop)
+ * Multiple aspect ratios
  * Volume boost
  * Auto frame rate matching on Android TV/boxes (Android 6+)
- * Post-playback actions (delete file/skip to next)
+ * Post-playback actions (skip to next)
  * Touch lock (long tap)
  * App shortcut for direct access to file chooser (Android 7.1+)
  * 3rd party equalizer / audio processing support (e.g. [Wavelet](https://github.com/Pittvandewitt/Wavelet))
@@ -71,16 +66,8 @@ Translate: [Weblate](https://hosted.weblate.org/engage/just-player/)
 
 ## Download
 
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="75">](https://play.google.com/store/apps/details?id=com.brouken.player)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="75">](https://f-droid.org/packages/com.brouken.player/)
-[<img src="https://accrescent.app/badges/get-it-on.png" alt="Get it on Accrescent" height="75">](https://accrescent.app/app/com.brouken.player)
-[<img src="https://brouken.com/img/get-it-on-obtainium.png" alt="Get it on Obtainium" height="75">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/moneytoo/Player)
-[<img src="https://raw.githubusercontent.com/andOTP/andOTP/master/assets/badges/get-it-on-github.png" alt="Get it on GitHub" height="75">](https://github.com/moneytoo/Player/releases/latest)
-[<img src="https://brouken.com/img/galaxy-store.png" alt="Available on Galaxy Store" height="75">](https://galaxystore.samsung.com/detail/com.brouken.player)
-[<img src="https://brouken.com/img/huawei-appgallery.png" alt="Explore it on AppGallery" height="75">](https://appgallery.cloud.huawei.com/ag/n/app/C104147921)
-[<img src="https://brouken.com/img/get-it-on-mi_app_mall.png" alt="Get it on Mi App Mall" height="75">](https://global.app.mi.com/details?id=com.brouken.player)
-[<img src="https://brouken.com/img/get-it-on-aptoide.png" alt="Get it on Aptoide" height="75">](https://just-player-marcel-dopita.en.aptoide.com/app)
-[<img src="https://brouken.com/img/get-it-on-amazon.png" alt="available at amazon" height="75">](https://www.amazon.com/gp/product/B091N8TTJH)
+[<img src="https://raw.githubusercontent.com/andOTP/andOTP/master/assets/badges/get-it-on-github.png" alt="Get it on GitHub" height="75">](https://github.com/saurabhv749/jet-video-player/releases/latest)
+
 
 Other links/channels: application thread on [XDA Developers](https://forum.xda-developers.com/t/app-5-0-just-video-player-no-bluetooth-lag-exoplayer-ffmpeg-audio-codecs.4189183/), subreddit on [reddit](https://www.reddit.com/r/JustPlayer/), entry on [AlternativeTo](https://alternativeto.net/software/just-video-player/about/), git mirror on [GitLab](https://gitlab.com/moneytoo/Player)
 
