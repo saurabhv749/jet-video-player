@@ -385,10 +385,7 @@ public class PlayerActivity extends Activity {
         buttonOpen.setId(View.generateViewId());
         buttonOpen.setContentDescription(getString(R.string.button_open));
 
-        buttonOpen.setOnClickListener(view -> {
-            openFile(mPrefs.mediaUri);
-            applyVideoConfig(mPrefs.mediaUri);
-        });
+        buttonOpen.setOnClickListener(view -> openFile(mPrefs.mediaUri));
 
         buttonOpen.setOnLongClickListener(view -> {
             if (!isTvBox && mPrefs.askScope) {
@@ -1705,6 +1702,7 @@ public class PlayerActivity extends Activity {
 
             safelyStartActivityForResult(intent, REQUEST_CHOOSER_VIDEO);
         }
+        applyVideoConfig(mPrefs.mediaUri);
     }
 
     private void loadSubtitleFile(Uri pickerInitialUri) {
@@ -2130,9 +2128,9 @@ public class PlayerActivity extends Activity {
                 if (next != null) {
                     return next.getUri();
                 }
+                applyVideoConfig(mPrefs.mediaUri);
             }
         }
-        applyVideoConfig(mPrefs.mediaUri);
         return null;
     }
 
