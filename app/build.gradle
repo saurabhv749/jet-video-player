@@ -14,7 +14,7 @@ android {
         targetSdkVersion 35
         versionCode 197
         versionName "0.${versionCode}"
-        archivesBaseName = "Just.Player.v${versionName}"
+        archivesBaseName = "Jet.Video.Player.v${versionName}"
         if (abiFilter) {
             def abiCodeMap = ["x86": 1, "x86_64": 2, "armeabi-v7a": 3, "arm64-v8a": 4]
             versionCode = versionCode * 10 + abiCodeMap[abiFilter]
