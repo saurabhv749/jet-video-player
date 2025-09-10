@@ -462,6 +462,7 @@ public class PlayerActivity extends Activity {
         buttonZoomIn.setImageResource(R.drawable.baseline_zoom_in_24);
         buttonZoomIn.setOnClickListener(v -> {
             scale(true);
+            resetHideCallbacks();
         });
 
         final ImageButton buttonZoomOut = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
@@ -469,6 +470,7 @@ public class PlayerActivity extends Activity {
         buttonZoomOut.setImageResource(R.drawable.baseline_zoom_out_24);
         buttonZoomOut.setOnClickListener(v -> {
             scale(false);
+            resetHideCallbacks();
         });
 
         if (isTvBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
