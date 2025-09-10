@@ -37,6 +37,7 @@ AC-4 audio is supported on devices providing such system decoder (e.g. Samsung G
  * Buttons to zoom in and out
  * PiP (Picture in Picture) on Android 8+ (resizable on Android 11+)
  * Multiple aspect ratios
+ * Remembers video settings
  * Volume boost
  * Auto frame rate matching on Android TV/boxes (Android 6+)
  * Post-playback actions (skip to next)
