@@ -21,7 +21,8 @@ import androidx.media3.ui.PlayerView;
 
 import java.util.Collections;
 
-public class CustomPlayerView extends PlayerView implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
+public class CustomPlayerView extends PlayerView
+        implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
     private final GestureDetectorCompat mDetector;
 
@@ -79,7 +80,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
 
     public CustomPlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mDetector = new GestureDetectorCompat(context,this);
+        mDetector = new GestureDetectorCompat(context, this);
 
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
@@ -130,7 +131,8 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
                     if (gestureOrientation == Orientation.HORIZONTAL) {
                         setCustomErrorMessage(null);
                     } else {
-                        postDelayed(textClearRunnable, isHandledLongPress ? MESSAGE_TIMEOUT_LONG : MESSAGE_TIMEOUT_TOUCH);
+                        postDelayed(textClearRunnable,
+                                isHandledLongPress ? MESSAGE_TIMEOUT_LONG : MESSAGE_TIMEOUT_TOUCH);
                     }
 
                     if (restorePlayState) {
@@ -170,8 +172,6 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
     @Override
     public void onShowPress(MotionEvent motionEvent) {
     }
-
-
 
     @Override
     public boolean onSingleTapUp(MotionEvent motionEvent) {
@@ -213,7 +213,8 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
 
         if (gestureOrientation == Orientation.HORIZONTAL || gestureOrientation == Orientation.UNKNOWN) {
             gestureScrollX += distanceX;
-            if (Math.abs(gestureScrollX) > SCROLL_STEP || (gestureOrientation == Orientation.HORIZONTAL && Math.abs(gestureScrollX) > SCROLL_STEP_SEEK)) {
+            if (Math.abs(gestureScrollX) > SCROLL_STEP
+                    || (gestureOrientation == Orientation.HORIZONTAL && Math.abs(gestureScrollX) > SCROLL_STEP_SEEK)) {
                 // Do not show controller if not already visible
                 setControllerAutoShow(false);
 
@@ -239,7 +240,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
 
                 if (PlayerActivity.haveMedia) {
                     if (gestureScrollX > 0) {
-                        if (seekStart + seekChange - SEEK_STEP  * distanceDiff >= 0) {
+                        if (seekStart + seekChange - SEEK_STEP * distanceDiff >= 0) {
                             PlayerActivity.player.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
                             seekChange -= SEEK_STEP * distanceDiff;
                             position = seekStart + seekChange;
@@ -252,7 +253,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
                             position = seekStart + seekChange;
                             PlayerActivity.player.seekTo(position);
                         } else if (seekStart + seekChange + SEEK_STEP < seekMax) {
-                            seekChange += SEEK_STEP  * distanceDiff;
+                            seekChange += SEEK_STEP * distanceDiff;
                             position = seekStart + seekChange;
                             PlayerActivity.player.seekTo(position);
                         }
@@ -267,7 +268,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
             }
         }
 
-        // LEFT = Brightness  |  RIGHT = Volume
+        // LEFT = Brightness | RIGHT = Volume
         if (gestureOrientation == Orientation.VERTICAL || gestureOrientation == Orientation.UNKNOWN) {
             gestureScrollY += distanceY;
             if (Math.abs(gestureScrollY) > SCROLL_STEP) {
@@ -277,7 +278,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
                 }
                 gestureOrientation = Orientation.VERTICAL;
 
-                if (motionEvent.getX() < (float)(getWidth() / 2)) {
+                if (motionEvent.getX() < (float) (getWidth() / 2)) {
                     brightnessControl.changeBrightness(this, gestureScrollY > 0, canSetAutoBrightness);
                 } else {
                     Utils.adjustVolume(getContext(), mAudioManager, this, gestureScrollY > 0, canBoostVolume, false);
@@ -321,7 +322,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
             setScale(mScaleFactor);
             restoreSurfaceView();
             clearIcon();
-            setCustomErrorMessage((int)(mScaleFactor * 100) + "%");
+            setCustomErrorMessage((int) (mScaleFactor * 100) + "%");
             return true;
         }
         return false;
@@ -346,8 +347,6 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
             mScaleFactorFit = getScaleFit();
             canScale = true;
         }
-        ImageButton buttonAspectRatio = findViewById(Integer.MAX_VALUE - 100);
-        buttonAspectRatio.setImageResource(R.drawable.ic_fit_screen_24dp);
         hideController();
         return true;
     }
@@ -359,9 +358,6 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
         if (mScaleFactor - mScaleFactorFit < 0.001) {
             setScale(1.f);
             setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-
-            ImageButton buttonAspectRatio = findViewById(Integer.MAX_VALUE - 100);
-            buttonAspectRatio.setImageResource(R.drawable.ic_aspect_ratio_24dp);
         }
         if (PlayerActivity.player != null && !PlayerActivity.player.isPlaying()) {
             showController();
@@ -376,8 +372,8 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
     }
 
     public float getScaleFit() {
-        return Math.min((float)getHeight() / (float)getVideoSurfaceView().getHeight(),
-                (float)getWidth() / (float)getVideoSurfaceView().getWidth());
+        return Math.min((float) getHeight() / (float) getVideoSurfaceView().getHeight(),
+                (float) getWidth() / (float) getVideoSurfaceView().getWidth());
     }
 
     private enum Orientation {
@@ -385,7 +381,8 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
     }
 
     public void setIconVolume(boolean volumeActive) {
-        exoErrorMessage.setCompoundDrawablesWithIntrinsicBounds(volumeActive ? R.drawable.ic_volume_up_24dp : R.drawable.ic_volume_off_24dp, 0, 0, 0);
+        exoErrorMessage.setCompoundDrawablesWithIntrinsicBounds(
+                volumeActive ? R.drawable.ic_volume_up_24dp : R.drawable.ic_volume_off_24dp, 0, 0, 0);
     }
 
     public void setHighlight(boolean active) {
@@ -404,7 +401,8 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
     }
 
     public void setIconLock(boolean locked) {
-        exoErrorMessage.setCompoundDrawablesWithIntrinsicBounds(locked ? R.drawable.ic_lock_24dp : R.drawable.ic_lock_open_24dp, 0, 0, 0);
+        exoErrorMessage.setCompoundDrawablesWithIntrinsicBounds(
+                locked ? R.drawable.ic_lock_24dp : R.drawable.ic_lock_open_24dp, 0, 0, 0);
     }
 
     public void setScale(final float scale) {
@@ -416,7 +414,7 @@ public class CustomPlayerView extends PlayerView implements GestureDetector.OnGe
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
-            //videoSurfaceView.animate().setStartDelay(0).setDuration(0).scaleX(scale).scaleY(scale).start();
+            // videoSurfaceView.animate().setStartDelay(0).setDuration(0).scaleX(scale).scaleY(scale).start();
         }
     }
 
