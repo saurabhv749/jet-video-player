@@ -139,6 +139,8 @@ public class PlayerActivity extends Activity {
     public static int boostLevel = 0;
     private float scaleFactor = 1.0f;
     private float vidAspectRatio;
+    private String vidAspectRatioTitle;
+    private ConfigFileManager configFileManager;
 
     private static final int REQUEST_CHOOSER_VIDEO = 1;
     private static final int REQUEST_CHOOSER_SUBTITLE = 2;
@@ -219,6 +221,7 @@ public class PlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         // Rotate ASAP, before super/inflating to avoid glitches with activity launch
         // animation
+        configFileManager = new ConfigFileManager(this);
         mPrefs = new Prefs(this);
         Utils.setOrientation(this, mPrefs.orientation);
 
@@ -382,7 +385,10 @@ public class PlayerActivity extends Activity {
         buttonOpen.setId(View.generateViewId());
         buttonOpen.setContentDescription(getString(R.string.button_open));
 
-        buttonOpen.setOnClickListener(view -> openFile(mPrefs.mediaUri));
+        buttonOpen.setOnClickListener(view -> {
+            openFile(mPrefs.mediaUri);
+            applyVideoConfig(mPrefs.mediaUri);
+        });
 
         buttonOpen.setOnLongClickListener(view -> {
             if (!isTvBox && mPrefs.askScope) {
@@ -420,40 +426,49 @@ public class PlayerActivity extends Activity {
             if (contentFrame != null) {
                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
                 String title = item.getTitle().toString();
+                int resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT;
 
-                if (title.equals(getString(R.string.video_resize_fit))) {
-                    Format format = player.getVideoFormat();
-                    float orgAspectRatio = Utils.getRational(format).floatValue();
-                    if (format != null) {
-                        // set default aspect ratio
-                        vidAspectRatio = orgAspectRatio;
-                        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-                        Utils.showText(playerView, getString(R.string.video_resize_fit));
-                    }
-                } else {
-                    String[] parts = title.split(":");
-                    if (parts.length == 2) {
-                        try {
-                            float w = Float.parseFloat(parts[0]);
-                            float h = Float.parseFloat(parts[1]);
-                            if (w > 0 && h > 0) {
-                                vidAspectRatio = w / h;
-                                playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-                                Utils.showText(playerView, title);
+                if (player != null) {
+                    if (title.equals(getString(R.string.video_resize_fit))) {
+                        Format format = player.getVideoFormat();
+                        float orgAspectRatio = Utils.getRational(format).floatValue();
+                        if (format != null) {
+                            // set default aspect ratio
+                            vidAspectRatio = orgAspectRatio;
+                            vidAspectRatioTitle = getString(R.string.video_resize_fit);
+                            title = getString(R.string.video_resize_fit);
+                        }
+                    } else {
+                        String[] parts = title.split(":");
+                        if (parts.length == 2) {
+                            try {
+                                float w = Float.parseFloat(parts[0]);
+                                float h = Float.parseFloat(parts[1]);
+                                if (w > 0 && h > 0) {
+                                    vidAspectRatio = w / h;
+                                    vidAspectRatioTitle = title;
+                                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM;
+                                }
+                            } catch (NumberFormatException e) {
                             }
-                        } catch (NumberFormatException e) {
                         }
                     }
                 }
-                contentFrame.setAspectRatio(vidAspectRatio);
-                scaleFactor = 1.0f; // restore scale
-                playerView.setScale(scaleFactor);
+                Utils.showText(playerView, title);
+                scaleFactor = 1.0f; // restore scale: 100%
+                // save configs
+                configFileManager.saveConfig(mPrefs.mediaUri.toString(), resizeMode, vidAspectRatio,
+                        vidAspectRatioTitle,
+                        scaleFactor);
+                item.setChecked(true);
+                applyVideoConfig(mPrefs.mediaUri);
             }
             return true;
         });
 
         buttonAspectRatio.setOnClickListener(view -> {
             popupMenu.show();
+            Utils.showText(playerView, vidAspectRatioTitle);
             resetHideCallbacks();
         });
 
@@ -762,6 +777,24 @@ public class PlayerActivity extends Activity {
         }
     }
 
+    private void applyVideoConfig(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        ConfigFileManager.VideoConfig config = configFileManager.readConfig(uri.toString());
+        if (config != null) {
+            // restore aspect ratio
+            AspectRatioFrameLayout contentFrame = playerView.findViewById(R.id.exo_content_frame);
+            contentFrame.setAspectRatio(config.aspectRatio);
+            playerView.setResizeMode(config.resizeMode);
+            playerView.setScale(config.scale);
+            scaleFactor = config.scale;
+            vidAspectRatio = config.aspectRatio;
+            vidAspectRatioTitle = config.aspectRatioTitle;
+            // updatebuttonAspectRatioIcon();
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -784,6 +817,7 @@ public class PlayerActivity extends Activity {
         if (isTvBox && Build.VERSION.SDK_INT >= 31) {
             updateSubtitleStyle(this);
         }
+        applyVideoConfig(mPrefs.mediaUri);
     }
 
     @Override
@@ -1395,6 +1429,7 @@ public class PlayerActivity extends Activity {
             playerView.setControllerShowTimeoutMs(PlayerActivity.CONTROLLER_TIMEOUT);
             player.setPlayWhenReady(true);
         }
+        applyVideoConfig(mPrefs.mediaUri);
     }
 
     private void savePlayer() {
@@ -1412,6 +1447,9 @@ public class PlayerActivity extends Activity {
                         playerView.getResizeMode(),
                         playerView.getVideoSurfaceView().getScaleX(),
                         player.getPlaybackParameters().speed);
+
+                configFileManager.saveConfig(mPrefs.mediaUri.toString(),
+                        playerView.getResizeMode(), vidAspectRatio, vidAspectRatioTitle, scaleFactor);
             }
         }
     }
@@ -1490,6 +1528,7 @@ public class PlayerActivity extends Activity {
             if (!isPlaying) {
                 PlayerActivity.locked = false;
             }
+            applyVideoConfig(mPrefs.mediaUri);
         }
 
         @SuppressLint("SourceLockedOrientationActivity")
@@ -2093,6 +2132,7 @@ public class PlayerActivity extends Activity {
                 }
             }
         }
+        applyVideoConfig(mPrefs.mediaUri);
         return null;
     }
 
@@ -2257,6 +2297,7 @@ public class PlayerActivity extends Activity {
         playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
         playerView.setScale(scaleFactor);
         playerView.setCustomErrorMessage((int) (scaleFactor * 100) + "%");
+        configFileManager.updateScale(mPrefs.mediaUri.toString(), scaleFactor);
     }
 
     private void updateButtonRotation() {
