@@ -2,7 +2,7 @@
 
 This repo is cloned from [moneytoo/Player](https://github.com/moneytoo/Player)
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/saurabhv749/jet-video-player/releases/latest)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/saurabhv749/jet-video-player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/saurabhv749/jet-video-player/releases/latest)
 [![Media3](https://img.shields.io/badge/Media3-1.8.0-007ec6?cacheSeconds=3600)](https://github.com/androidx/media/releases/tag/1.8.0)
 
 Android video player based on [Media3](https://github.com/androidx/media) (formerly [ExoPlayer](https://github.com/google/ExoPlayer)), compatible with Android 5+ and Android TV.
@@ -34,6 +34,7 @@ AC-4 audio is supported on devices providing such system decoder (e.g. Samsung G
  * Horizontal swipe and double tap to quickly seek
  * Vertical swipe to change brightness (left) / volume (right)
  * Pinch to zoom (Android 7+)
+ * Buttons to zoom in and out
  * PiP (Picture in Picture) on Android 8+ (resizable on Android 11+)
  * Multiple aspect ratios
  * Volume boost

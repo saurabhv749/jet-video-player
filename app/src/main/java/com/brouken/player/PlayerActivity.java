@@ -137,8 +137,6 @@ public class PlayerActivity extends Activity {
     public static Snackbar snackbar;
     private ExoPlaybackException errorToShow;
     public static int boostLevel = 0;
-    private boolean isScaling = false;
-    private boolean isScaleStarting = false;
     private float scaleFactor = 1.0f;
     private float vidAspectRatio;
 
@@ -160,7 +158,6 @@ public class PlayerActivity extends Activity {
     private CoordinatorLayout coordinatorLayout;
     private TextView titleView;
     private ImageButton buttonOpen;
-    private ImageButton buttonPiP;
     private ImageButton buttonAspectRatio;
     private ImageButton buttonRotation;
     private ImageButton exoSettings;
@@ -220,7 +217,8 @@ public class PlayerActivity extends Activity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Rotate ASAP, before super/inflating to avoid glitches with activity launch animation
+        // Rotate ASAP, before super/inflating to avoid glitches with activity launch
+        // animation
         mPrefs = new Prefs(this);
         Utils.setOrientation(this, mPrefs.orientation);
 
@@ -238,7 +236,8 @@ public class PlayerActivity extends Activity {
                 window.setDecorFitsSystemWindows(false);
                 WindowInsetsController windowInsetsController = window.getInsetsController();
                 if (windowInsetsController != null) {
-                    // On Android 12 BEHAVIOR_DEFAULT allows system gestures without visible system bars
+                    // On Android 12 BEHAVIOR_DEFAULT allows system gestures without visible system
+                    // bars
                     windowInsetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
                 }
             }
@@ -337,7 +336,7 @@ public class PlayerActivity extends Activity {
         playerView.setControllerHideOnTouch(false);
         playerView.setControllerAutoShow(true);
 
-        ((DoubleTapPlayerView)playerView).setDoubleTapEnabled(false);
+        ((DoubleTapPlayerView) playerView).setDoubleTapEnabled(false);
 
         timeBar = playerView.findViewById(R.id.exo_progress);
         timeBar.addListener(new TimeBar.OnScrubListener() {
@@ -398,14 +397,12 @@ public class PlayerActivity extends Activity {
             // TODO: Android 12 improvements:
             // https://developer.android.com/about/versions/12/features/pip-improvements
             mPictureInPictureParamsBuilder = new PictureInPictureParams.Builder();
-            boolean success = updatePictureInPictureActions(R.drawable.ic_play_arrow_24dp, R.string.exo_controls_play_description, CONTROL_TYPE_PLAY, REQUEST_PLAY);
+            boolean success = updatePictureInPictureActions(R.drawable.ic_play_arrow_24dp,
+                    R.string.exo_controls_play_description, CONTROL_TYPE_PLAY, REQUEST_PLAY);
 
             if (success) {
-                buttonPiP = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
-                buttonPiP.setContentDescription(getString(R.string.button_pip));
-                buttonPiP.setImageResource(R.drawable.ic_picture_in_picture_alt_24dp);
-
-                buttonPiP.setOnClickListener(view -> enterPiP());
+                // no need to add pip button. It will be shown by system if enbaled by user in
+                // app settings
             }
         }
 
@@ -413,41 +410,44 @@ public class PlayerActivity extends Activity {
         buttonAspectRatio.setId(Integer.MAX_VALUE - 100);
         buttonAspectRatio.setImageResource(R.drawable.ic_aspect_ratio_24dp);
         buttonAspectRatio.setContentDescription(getString(R.string.button_aspect_ratio));
-        
-        final PopupMenu popupMenu = new PopupMenu(PlayerActivity.this, buttonAspectRatio, Gravity.TOP, R.attr.popupMenuStyle, 0);
+
+        final PopupMenu popupMenu = new PopupMenu(PlayerActivity.this, buttonAspectRatio, Gravity.TOP,
+                R.attr.popupMenuStyle, 0);
         popupMenu.getMenuInflater().inflate(R.menu.aspect_ratio, popupMenu.getMenu());
 
-        popupMenu.setOnMenuItemClickListener(item->{
+        popupMenu.setOnMenuItemClickListener(item -> {
             AspectRatioFrameLayout contentFrame = playerView.findViewById(R.id.exo_content_frame);
-            if(contentFrame !=null){
+            if (contentFrame != null) {
                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
                 String title = item.getTitle().toString();
 
-                if(title.equals(getString(R.string.video_resize_fit))){
+                if (title.equals(getString(R.string.video_resize_fit))) {
                     Format format = player.getVideoFormat();
                     float orgAspectRatio = Utils.getRational(format).floatValue();
-                    if(format !=null){
+                    if (format != null) {
                         // set default aspect ratio
                         vidAspectRatio = orgAspectRatio;
                         playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
                         Utils.showText(playerView, getString(R.string.video_resize_fit));
                     }
-                }else{
+                } else {
                     String[] parts = title.split(":");
-                    if(parts.length == 2){
-                        try{
+                    if (parts.length == 2) {
+                        try {
                             float w = Float.parseFloat(parts[0]);
                             float h = Float.parseFloat(parts[1]);
-                            if(w >0 && h >0){
-                                vidAspectRatio = w/h;
+                            if (w > 0 && h > 0) {
+                                vidAspectRatio = w / h;
                                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
                                 Utils.showText(playerView, title);
                             }
-                        }catch (NumberFormatException e){
+                        } catch (NumberFormatException e) {
                         }
                     }
                 }
                 contentFrame.setAspectRatio(vidAspectRatio);
+                scaleFactor = 1.0f; // restore scale
+                playerView.setScale(scaleFactor);
             }
             return true;
         });
@@ -455,6 +455,20 @@ public class PlayerActivity extends Activity {
         buttonAspectRatio.setOnClickListener(view -> {
             popupMenu.show();
             resetHideCallbacks();
+        });
+
+        final ImageButton buttonZoomIn = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
+        buttonZoomIn.setContentDescription(getString(R.string.video_zoom_in));
+        buttonZoomIn.setImageResource(R.drawable.baseline_zoom_in_24);
+        buttonZoomIn.setOnClickListener(v -> {
+            scale(true);
+        });
+
+        final ImageButton buttonZoomOut = new ImageButton(this, null, 0, R.style.ExoStyledControls_Button_Bottom);
+        buttonZoomOut.setContentDescription(getString(R.string.video_zoom_out));
+        buttonZoomOut.setImageResource(R.drawable.baseline_zoom_out_24);
+        buttonZoomOut.setOnClickListener(v -> {
+            scale(false);
         });
 
         if (isTvBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -472,13 +486,16 @@ public class PlayerActivity extends Activity {
         });
 
         final int titleViewPaddingHorizontal = Utils.dpToPx(14);
-        final int titleViewPaddingVertical = getResources().getDimensionPixelOffset(R.dimen.exo_styled_bottom_bar_time_padding);
+        final int titleViewPaddingVertical = getResources()
+                .getDimensionPixelOffset(R.dimen.exo_styled_bottom_bar_time_padding);
         FrameLayout centerView = playerView.findViewById(R.id.exo_controls_background);
         titleView = new TextView(this);
         titleView.setBackgroundResource(R.color.ui_controls_background);
         titleView.setTextColor(Color.WHITE);
-        titleView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        titleView.setPadding(titleViewPaddingHorizontal, titleViewPaddingVertical, titleViewPaddingHorizontal, titleViewPaddingVertical);
+        titleView.setLayoutParams(
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        titleView.setPadding(titleViewPaddingHorizontal, titleViewPaddingVertical, titleViewPaddingHorizontal,
+                titleViewPaddingVertical);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         titleView.setVisibility(View.GONE);
         titleView.setMaxLines(1);
@@ -535,7 +552,8 @@ public class PlayerActivity extends Activity {
 
                     final FrameLayout exoBottomBar = findViewById(R.id.exo_bottom_bar);
                     ViewGroup.LayoutParams params = exoBottomBar.getLayoutParams();
-                    params.height = getResources().getDimensionPixelSize(R.dimen.exo_styled_bottom_bar_height) + windowInsets.getSystemWindowInsetBottom();
+                    params.height = getResources().getDimensionPixelSize(R.dimen.exo_styled_bottom_bar_height)
+                            + windowInsets.getSystemWindowInsetBottom();
                     exoBottomBar.setLayoutParams(params);
 
                     findViewById(R.id.exo_left).getLayoutParams().width = left;
@@ -544,19 +562,27 @@ public class PlayerActivity extends Activity {
                     bottomBarPaddingBottom = windowInsets.getSystemWindowInsetBottom();
                     progressBarMarginBottom = windowInsets.getSystemWindowInsetBottom();
                 } else {
-                    view.setPadding(0, windowInsets.getSystemWindowInsetTop(),0, windowInsets.getSystemWindowInsetBottom());
+                    view.setPadding(0, windowInsets.getSystemWindowInsetTop(), 0,
+                            windowInsets.getSystemWindowInsetBottom());
                 }
 
-                Utils.setViewParams(titleView, paddingLeft + titleViewPaddingHorizontal, titleViewPaddingVertical, paddingRight + titleViewPaddingHorizontal, titleViewPaddingVertical,
+                Utils.setViewParams(titleView, paddingLeft + titleViewPaddingHorizontal, titleViewPaddingVertical,
+                        paddingRight + titleViewPaddingHorizontal, titleViewPaddingVertical,
                         marginLeft, windowInsets.getSystemWindowInsetTop(), marginRight, 0);
 
-                Utils.setViewParams(findViewById(R.id.exo_bottom_bar), paddingLeft, 0, paddingRight, bottomBarPaddingBottom,
+                Utils.setViewParams(findViewById(R.id.exo_bottom_bar), paddingLeft, 0, paddingRight,
+                        bottomBarPaddingBottom,
                         marginLeft, 0, marginRight, 0);
 
-                Utils.setViewParams(findViewById(R.id.exo_progress), windowInsets.getSystemWindowInsetLeft(), 0, windowInsets.getSystemWindowInsetRight(), 0,
-                        0, 0, 0, getResources().getDimensionPixelSize(R.dimen.exo_styled_progress_margin_bottom) + progressBarMarginBottom);
+                Utils.setViewParams(findViewById(R.id.exo_progress), windowInsets.getSystemWindowInsetLeft(), 0,
+                        windowInsets.getSystemWindowInsetRight(), 0,
+                        0, 0, 0, getResources().getDimensionPixelSize(R.dimen.exo_styled_progress_margin_bottom)
+                                + progressBarMarginBottom);
 
-                Utils.setViewMargins(findViewById(R.id.exo_error_message), 0, windowInsets.getSystemWindowInsetTop() / 2, 0, getResources().getDimensionPixelSize(R.dimen.exo_error_message_margin_bottom) + windowInsets.getSystemWindowInsetBottom() / 2);
+                Utils.setViewMargins(findViewById(R.id.exo_error_message), 0,
+                        windowInsets.getSystemWindowInsetTop() / 2, 0,
+                        getResources().getDimensionPixelSize(R.dimen.exo_error_message_margin_bottom)
+                                + windowInsets.getSystemWindowInsetBottom() / 2);
 
                 windowInsets.consumeSystemWindowInsets();
             }
@@ -566,7 +592,8 @@ public class PlayerActivity extends Activity {
         timeBar.setPlayedAdMarkerColor(Color.argb(0x98, 0xFF, 0xFF, 0xFF));
 
         try {
-            CustomDefaultTrackNameProvider customDefaultTrackNameProvider = new CustomDefaultTrackNameProvider(getResources());
+            CustomDefaultTrackNameProvider customDefaultTrackNameProvider = new CustomDefaultTrackNameProvider(
+                    getResources());
             final Field field = PlayerControlView.class.getDeclaredField("trackNameProvider");
             field.setAccessible(true);
             field.set(controlView, customDefaultTrackNameProvider);
@@ -588,14 +615,15 @@ public class PlayerActivity extends Activity {
 
         // Prevent double tap actions in controller
         findViewById(R.id.exo_bottom_bar).setOnTouchListener((v, event) -> true);
-        //titleView.setOnTouchListener((v, event) -> true);
+        // titleView.setOnTouchListener((v, event) -> true);
 
         playerListener = new PlayerListener();
 
         mBrightnessControl = new BrightnessControl(this);
         if (mPrefs.brightness >= 0) {
             mBrightnessControl.currentBrightnessLevel = mPrefs.brightness;
-            mBrightnessControl.setScreenBrightness(mBrightnessControl.levelToBrightness(mBrightnessControl.currentBrightnessLevel));
+            mBrightnessControl.setScreenBrightness(
+                    mBrightnessControl.levelToBrightness(mBrightnessControl.currentBrightnessLevel));
         }
         playerView.setBrightnessControl(mBrightnessControl);
 
@@ -607,10 +635,10 @@ public class PlayerActivity extends Activity {
         exoBasicControls.removeView(exoSettings);
         final ImageButton exoRepeat = exoBasicControls.findViewById(R.id.exo_repeat_toggle);
         exoBasicControls.removeView(exoRepeat);
-        //exoBasicControls.setVisibility(View.GONE);
+        // exoBasicControls.setVisibility(View.GONE);
 
         exoSettings.setOnLongClickListener(view -> {
-            //askForScope(false, false);
+            // askForScope(false, false);
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivityForResult(intent, REQUEST_SETTINGS);
             return true;
@@ -624,12 +652,15 @@ public class PlayerActivity extends Activity {
 
         updateButtons(false);
 
-        final HorizontalScrollView horizontalScrollView = (HorizontalScrollView) getLayoutInflater().inflate(R.layout.controls, null);
+        final HorizontalScrollView horizontalScrollView = (HorizontalScrollView) getLayoutInflater()
+                .inflate(R.layout.controls, null);
         final LinearLayout controls = horizontalScrollView.findViewById(R.id.controls);
 
         controls.addView(buttonOpen);
         controls.addView(exoSubtitle);
         controls.addView(buttonAspectRatio);
+        controls.addView(buttonZoomIn);
+        controls.addView(buttonZoomOut);
         if (mPrefs.repeatToggle) {
             controls.addView(exoRepeat);
         }
@@ -662,14 +693,17 @@ public class PlayerActivity extends Activity {
                 // https://developer.android.com/training/system-ui/immersive
                 Utils.toggleSystemUi(PlayerActivity.this, playerView, visibility == View.VISIBLE);
                 if (visibility == View.VISIBLE) {
-                    // Because when using dpad controls, focus resets to first item in bottom controls bar
+                    // Because when using dpad controls, focus resets to first item in bottom
+                    // controls bar
                     findViewById(R.id.exo_play_pause).requestFocus();
                 }
 
                 if (controllerVisible && playerView.isControllerFullyVisible()) {
                     if (mPrefs.firstRun) {
                         TapTargetView.showFor(PlayerActivity.this,
-                                TapTarget.forView(buttonOpen, getString(R.string.onboarding_open_title), getString(R.string.onboarding_open_description))
+                                TapTarget
+                                        .forView(buttonOpen, getString(R.string.onboarding_open_title),
+                                                getString(R.string.onboarding_open_description))
                                         .outerCircleColor(R.color.green)
                                         .targetCircleColor(R.color.white)
                                         .titleTextSize(22)
@@ -684,7 +718,8 @@ public class PlayerActivity extends Activity {
                                     }
                                 });
                         // TODO: Explain gestures?
-                        //  "Use vertical and horizontal gestures to change brightness, volume and seek in video"
+                        // "Use vertical and horizontal gestures to change brightness, volume and seek
+                        // in video"
                         mPrefs.markFirstRun();
                     }
                     if (errorToShow != null) {
@@ -961,33 +996,6 @@ public class PlayerActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (isScaling) {
-            final int keyCode = event.getKeyCode();
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                switch (keyCode) {
-                    case KeyEvent.KEYCODE_DPAD_UP:
-                        scale(true);
-                        break;
-                    case KeyEvent.KEYCODE_DPAD_DOWN:
-                        scale(false);
-                        break;
-                }
-            } else if (event.getAction() == KeyEvent.ACTION_UP) {
-                switch (keyCode) {
-                    case KeyEvent.KEYCODE_DPAD_UP:
-                    case KeyEvent.KEYCODE_DPAD_DOWN:
-                        break;
-                    default:
-                        if (isScaleStarting) {
-                            isScaleStarting = false;
-                        } else {
-                            scaleEnd();
-                        }
-                }
-            }
-            return true;
-        }
-
         if (isTvBox && !controllerVisibleFully) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 onKeyDown(event.getKeyCode(), event);
@@ -2229,9 +2237,6 @@ public class PlayerActivity extends Activity {
     }
 
     void updateButtons(final boolean enable) {
-        if (buttonPiP != null) {
-            Utils.setButtonEnabled(this, buttonPiP, enable);
-        }
         Utils.setButtonEnabled(this, buttonAspectRatio, enable);
         if (isTvBox) {
             Utils.setButtonEnabled(this, exoSettings, true);
@@ -2240,19 +2245,6 @@ public class PlayerActivity extends Activity {
         }
     }
 
-//    private void scaleStart() {
-//        isScaling = true;
-//        if (playerView.getResizeMode() != AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
-//            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-//        }
-//        scaleFactor = playerView.getVideoSurfaceView().getScaleX();
-//        playerView.removeCallbacks(playerView.textClearRunnable);
-//        playerView.clearIcon();
-//        playerView.setCustomErrorMessage((int) (scaleFactor * 100) + "%");
-//        playerView.hideController();
-//        isScaleStarting = true;
-//    }
-
     private void scale(boolean up) {
         if (up) {
             scaleFactor += 0.01;
@@ -2260,20 +2252,9 @@ public class PlayerActivity extends Activity {
             scaleFactor -= 0.01;
         }
         scaleFactor = Utils.normalizeScaleFactor(scaleFactor, playerView.getScaleFit());
+        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
         playerView.setScale(scaleFactor);
         playerView.setCustomErrorMessage((int) (scaleFactor * 100) + "%");
-    }
-
-    private void scaleEnd() {
-        isScaling = false;
-        playerView.postDelayed(playerView.textClearRunnable, 200);
-        if (player != null && !player.isPlaying()) {
-            playerView.showController();
-        }
-        if (Math.abs(playerView.getScaleFit() - scaleFactor) < 0.01 / 2) {
-            playerView.setScale(1.f);
-            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-        }
     }
 
     private void updateButtonRotation() {
