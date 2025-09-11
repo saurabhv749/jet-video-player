@@ -132,7 +132,7 @@ Alternatively, select the text url in the source app, choose _Share_ and find Ju
 
 ### How to zoom in to get rid of black bars?
 
-If your device has a touchscreen you can use the pinch-to-zoom gesture or just tap the Resize button for a Crop. **Android TV**: Long tap the Resize button to enter Zoom mode. Then use Up and Down keys for precise zoom.
+If your device has a touchscreen you can use the pinch-to-zoom gesture or just use the zoom in and out buttons to scale.
 
 ### What to do if Bluetooth audio is not in sync with video?
 
