@@ -25,8 +25,9 @@ AC-4 audio is supported on devices providing such system decoder (e.g. Samsung G
 
 ## Screenshots
 
-<img src="./assets/Screenshot_01.jpg" width="400"> 
-<img src="./assets/Screenshot_02.jpg" width="400"> 
+<img src="./assets/Screenshot_01_11zon.png" width="400"> 
+<img src="./assets/Screenshot_02_11zon.png" width="400"> 
+<img src="./assets/Screenshot_03_11zon.png" width="400"> 
 <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="400">
 
 ## Features
@@ -58,7 +59,7 @@ Some advanced features can be enabled or configured in settings. To access it, l
  * Auto frame rate matching. (On Android 11+ and "compatible" displays, ExoPlayer supports [seamless refresh rate switching](https://source.android.com/devices/graphics/multiple-refresh-rate))
  * [Tunneled playback](https://medium.com/google-exoplayer/tunneled-video-playback-in-exoplayer-84f084a8094d). Enabling tunneling can improve playback of 4K/HDR content on Android TV.
  * Playback of Dolby Vision profile 7 (UHD Blu-ray) as HDR HEVC
- * Auto picture-in-picture. When you leave Just Player through the home button and video is playing, PiP will be activated automatically.
+ * Auto picture-in-picture. When you leave Jet Player through the home button and video is playing, PiP will be activated automatically.
  * Skip silence
  * Repeat toggle
 
@@ -81,9 +82,9 @@ Other links/channels: application thread on [XDA Developers](https://forum.xda-d
 
 To load external (non-embedded) subtitles, long press the 📁 file open action in the bottom bar. The first time you do that, you will be offered to select root video folder to enable automatic loading of external subtitles.
 
-💡📺 Because of [limitations on Android TV](https://github.com/moneytoo/Player/issues/248#issuecomment-1019565204), Just Player is also able to open subtitle files from external file managers. You can open video file from your file manager, then return back and also  open subtitle file in Just Player. Subtitle will be available in the last selected video.
+💡📺 Because of [limitations on Android TV](https://github.com/moneytoo/Player/issues/248#issuecomment-1019565204), Jet Player is also able to open subtitle files from external file managers. You can open video file from your file manager, then return back and also  open subtitle file in Jet Player. Subtitle will be available in the last selected video.
 
-Just Player is also able to detect some subtitle files when accessing videos over HTTP/HTTPS. Just use the [same naming](https://github.com/moneytoo/Player/issues/173) for video files as well as subtitles (e.g. `video.mkv` and `video.srt`).
+Jet Player is also able to detect some subtitle files when accessing videos over HTTP/HTTPS. Jet use the [same naming](https://github.com/moneytoo/Player/issues/173) for video files as well as subtitles (e.g. `video.mkv` and `video.srt`).
 
 ### How do I change subtitle font, size or color?
 
@@ -97,15 +98,15 @@ To quickly access the system _Caption preferences_ screen, long tap the subtitle
 
 Unfortunately, upstream ExoPlayer doesn't handle some older formats like ~~[AVI container](https://github.com/google/ExoPlayer/issues/2092)~~, WMV or [Theora](https://github.com/google/ExoPlayer/issues/4970). Majority of devices also cannot handle [10-bit AVC](https://github.com/moneytoo/Player/issues/87#issuecomment-816228143).
 
-Just Player focuses on playing videos so audio only playback isn't officialy supported ([request](https://github.com/moneytoo/Player/issues/55)).
+Jet Player focuses on playing videos so audio only playback isn't officialy supported ([request](https://github.com/moneytoo/Player/issues/55)).
 
 ### How to view detailed video information (like resolution, bitrate etc.)?
 
-Install app like [MediaInfo](https://play.google.com/store/apps/details?id=net.mediaarea.mediainfo) (or APK from [MediaArea.net](https://mediaarea.net/en/MediaInfo/Download/Android)). Then, to quickly open MediaInfo from Just Player, long press the video name/title.
+Install app like [MediaInfo](https://play.google.com/store/apps/details?id=net.mediaarea.mediainfo) (or APK from [MediaArea.net](https://mediaarea.net/en/MediaInfo/Download/Android)). Then, to quickly open MediaInfo from Jet Player, long press the video name/title.
 
 ### I prefer using media library instead of a file chooser...
 
-Just Player uses system file chooser which already allows two different browsing modes: 
+Jet Player uses system file chooser which already allows two different browsing modes: 
 
 1. **Videos** - listing only device directories that contain videos
 
@@ -116,7 +117,7 @@ Just Player uses system file chooser which already allows two different browsing
     <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/readmeScreenshots/files_2.png" width="280">
 
 Alternatively, some people choose to use the media library function of
-[Nova Video Player](https://github.com/nova-video-player/aos-AVP) and integrate it with Just Player by enabling "*Allow using another video player*" feature. This also gives you convenient access to content on network storages (SMB, UPnP, FTP and SFTP).
+[Nova Video Player](https://github.com/nova-video-player/aos-AVP) and integrate it with Jet Player by enabling "*Allow using another video player*" feature. This also gives you convenient access to content on network storages (SMB, UPnP, FTP and SFTP).
 
 ### How to access videos on network storages (SMB, WebDAV, SFTP, etc.)?
 
@@ -126,9 +127,9 @@ Alternatively, some people choose to use the media library function of
 
 ### How do I open a streaming link, where do I enter an url?
 
-Just Player does not have any UI to enter internet addresses, but it is registered for handling all compatible streaming links. When opening/tapping links in other apps, Just Player should be generally offered as an option. (Though this may not work in all situations, especially on Android 12+.)
+Jet Player does not have any UI to enter internet addresses, but it is registered for handling all compatible streaming links. When opening/tapping links in other apps, Jet Player should be generally offered as an option. (Though this may not work in all situations, especially on Android 12+.)
 
-Alternatively, select the text url in the source app, choose _Share_ and find Just Player to play it.
+Alternatively, select the text url in the source app, choose _Share_ and find Jet Player to play it.
 
 ### How to zoom in to get rid of black bars?
 
@@ -140,7 +141,7 @@ Just pause and resume playback once again.
 
 ## Other open source Android video players
 
-Here's a comparison table presenting all available and significant open source video players for Android I was able to find. Just Player is something like ~~80%~~ 90% feature complete. It will probably never have dozens of options or some rich media library UI. It will never truly compete with feature rich VLC. It just attempts to provide functional feature set and motive others to create greater players based on amazing ExoPlayer.
+Here's a comparison table presenting all available and significant open source video players for Android I was able to find. Jet Player is something like ~~80%~~ 90% feature complete. It will probably never have dozens of options or some rich media library UI. It will never truly compete with feature rich VLC. It just attempts to provide functional feature set and motive others to create greater players based on amazing ExoPlayer.
 
 | App name (source)                                                 | Media engine                                                                                                                                                            |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

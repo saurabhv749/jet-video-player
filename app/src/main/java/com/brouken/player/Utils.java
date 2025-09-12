@@ -73,8 +73,10 @@ class Utils {
 
     public static final String FEATURE_FIRE_TV = "amazon.hardware.fire_tv";
 
-    public static final String[] supportedExtensionsVideo = new String[] { "3gp", "m4v", "mkv", "mov", "mp4", "ts", "webm" };
-    public static final String[] supportedExtensionsSubtitle = new String[] { "srt", "ssa", "ass", "vtt", "ttml", "dfxp", "xml" };
+    public static final String[] supportedExtensionsVideo = new String[] { "3gp", "m4v", "mkv", "mov", "mp4", "ts",
+            "webm" };
+    public static final String[] supportedExtensionsSubtitle = new String[] { "srt", "ssa", "ass", "vtt", "ttml",
+            "dfxp", "xml" };
 
     public static final String[] supportedMimeTypesVideo = new String[] {
             // Local mime types on Android:
@@ -159,7 +161,8 @@ class Utils {
         String result = null;
         try {
             if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
-                try (Cursor cursor = context.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                try (Cursor cursor = context.getContentResolver().query(uri,
+                        new String[] { OpenableColumns.DISPLAY_NAME }, null, null, null)) {
                     if (cursor != null && cursor.moveToFirst()) {
                         final int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                         if (columnIndex > -1)
@@ -183,7 +186,8 @@ class Utils {
     }
 
     public static boolean isVolumeMax(final AudioManager audioManager) {
-        return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == audioManager
+                .getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     }
 
     public static boolean isVolumeMin(final AudioManager audioManager) {
@@ -191,11 +195,12 @@ class Utils {
         return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == min;
     }
 
-    public static void adjustVolume(final Context context, final AudioManager audioManager, final CustomPlayerView playerView, final boolean raise, boolean canBoost, boolean clear) {
+    public static void adjustVolume(final Context context, final AudioManager audioManager,
+            final CustomPlayerView playerView, final boolean raise, boolean canBoost, boolean clear) {
         playerView.removeCallbacks(playerView.textClearRunnable);
 
-        final int volume = getVolume(context,false, audioManager);
-        final int volumeMax = getVolume(context,true, audioManager);
+        final int volume = getVolume(context, false, audioManager);
+        final int volumeMax = getVolume(context, true, audioManager);
         boolean volumeActive = volume != 0;
 
         // Handle volume changes outside the app (lose boost if volume is not maxed out)
@@ -220,7 +225,9 @@ class Utils {
                     e.printStackTrace();
                 }
             }
-            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, raise ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                    raise ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER,
+                    AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
             final int volumeNew = getVolume(context, false, audioManager);
             // Custom volume step on Samsung devices (Sound Assistant)
             if (raise && volume == volumeNew) {
@@ -229,7 +236,8 @@ class Utils {
                 playerView.volumeUpsInRow = 0;
             }
             if (playerView.volumeUpsInRow > 4 && !isVolumeMin(audioManager)) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE | AudioManager.FLAG_SHOW_UI);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE,
+                        AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE | AudioManager.FLAG_SHOW_UI);
             } else {
                 volumeActive = volumeNew != 0;
                 playerView.setCustomErrorMessage(volumeActive ? " " + volumeNew : "");
@@ -289,7 +297,8 @@ class Utils {
                         }
                     }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
         if (max) {
             return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
@@ -300,10 +309,10 @@ class Utils {
 
     public static void setButtonEnabled(final Context context, final ImageButton button, final boolean enabled) {
         button.setEnabled(enabled);
-        button.setAlpha(enabled ?
-                        (float) context.getResources().getInteger(R.integer.exo_media_button_opacity_percentage_enabled) / 100 :
-                        (float) context.getResources().getInteger(R.integer.exo_media_button_opacity_percentage_disabled) / 100
-                );
+        button.setAlpha(enabled
+                ? (float) context.getResources().getInteger(R.integer.exo_media_button_opacity_percentage_enabled) / 100
+                : (float) context.getResources().getInteger(R.integer.exo_media_button_opacity_percentage_disabled)
+                        / 100);
     }
 
     public static void showText(final CustomPlayerView playerView, final String text, final long timeout) {
@@ -349,9 +358,11 @@ class Utils {
             case SYSTEM:
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                 break;
-            /*case SENSOR:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-                break;*/
+            /*
+             * case SENSOR:
+             * activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+             * break;
+             */
         }
     }
 
@@ -390,7 +401,8 @@ class Utils {
         final int minutes = totalSeconds % 3600 / 60;
         final int hours = totalSeconds / 3600;
 
-        return (hours > 0 ? String.format("%d:%02d:%02d", hours, minutes, seconds) : String.format("%02d:%02d", minutes, seconds));
+        return (hours > 0 ? String.format("%d:%02d:%02d", hours, minutes, seconds)
+                : String.format("%02d:%02d", minutes, seconds));
     }
 
     public static String formatMilisSign(long time) {
@@ -402,17 +414,19 @@ class Utils {
 
     public static void log(final String text) {
         if (BuildConfig.DEBUG) {
-            Log.d("JustPlayer", text);
+            Log.d("JetVideoPlayer", text);
         }
     }
 
-    public static void setViewMargins(final View view, int marginLeft, int marginTop, int marginRight, int marginBottom) {
+    public static void setViewMargins(final View view, int marginLeft, int marginTop, int marginRight,
+            int marginBottom) {
         final FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) view.getLayoutParams();
         layoutParams.setMargins(marginLeft, marginTop, marginRight, marginBottom);
         view.setLayoutParams(layoutParams);
     }
 
-    public static void setViewParams(final View view, int paddingLeft, int paddingTop, int paddingRight, int paddingBottom, int marginLeft, int marginTop, int marginRight, int marginBottom) {
+    public static void setViewParams(final View view, int paddingLeft, int paddingTop, int paddingRight,
+            int paddingBottom, int marginLeft, int marginTop, int marginRight, int marginBottom) {
         view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
         setViewMargins(view, marginLeft, marginTop, marginRight, marginBottom);
     }
@@ -420,19 +434,21 @@ class Utils {
     public static boolean isDeletable(final Context context, final Uri uri) {
         try {
             if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
-                try (Cursor cursor = context.getContentResolver().query(uri, new String[]{DocumentsContract.Document.COLUMN_FLAGS}, null, null, null)) {
+                try (Cursor cursor = context.getContentResolver().query(uri,
+                        new String[] { DocumentsContract.Document.COLUMN_FLAGS }, null, null, null)) {
                     if (cursor != null && cursor.moveToFirst()) {
                         final int columnIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_FLAGS);
                         if (columnIndex > -1) {
                             int flags = cursor.getInt(columnIndex);
-                            return (flags & DocumentsContract.Document.FLAG_SUPPORTS_DELETE) == DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
+                            return (flags
+                                    & DocumentsContract.Document.FLAG_SUPPORTS_DELETE) == DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
                         }
                     }
                 }
             } else if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
                 if (Build.VERSION.SDK_INT >= 23) {
-                    boolean hasPermission = context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_GRANTED;
+                    boolean hasPermission = context.checkSelfPermission(
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
                     if (!hasPermission) {
                         return false;
                     }
@@ -468,7 +484,8 @@ class Utils {
             return true;
         }
 
-        // Missing Files app (DocumentsUI) means box (some boxes still have non functional app or stub)
+        // Missing Files app (DocumentsUI) means box (some boxes still have non
+        // functional app or stub)
         if (!hasSAFChooser(pm)) {
             return true;
         }
@@ -476,7 +493,8 @@ class Utils {
         // Legacy storage no longer works on Android 11 (level 30)
         if (Build.VERSION.SDK_INT < 30) {
             // (Some boxes still report touchscreen feature)
-            if (!pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (!pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+                    && !pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
                 return true;
             }
 
@@ -501,7 +519,7 @@ class Utils {
     }
 
     public static int normRate(float rate) {
-        return (int)(rate * 100f);
+        return (int) (rate * 100f);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -548,7 +566,8 @@ class Utils {
                         for (Display.Mode mode : modesHigh) {
                             modes += " " + mode.getRefreshRate();
                             if (normRate(mode.getRefreshRate()) % normRate(frameRate) <= 0.0001f) {
-                                if (modeBest == null || normRate(mode.getRefreshRate()) > normRate(modeBest.getRefreshRate())) {
+                                if (modeBest == null
+                                        || normRate(mode.getRefreshRate()) > normRate(modeBest.getRefreshRate())) {
                                     modeBest = mode;
                                 }
                             }
@@ -568,7 +587,8 @@ class Utils {
                         if (BuildConfig.DEBUG)
                             Toast.makeText(activity, modes + "\n" +
                                     "Video frameRate: " + frameRate + "\n" +
-                                    "Current display refreshRate: " + modeBest.getRefreshRate(), Toast.LENGTH_LONG).show();
+                                    "Current display refreshRate: " + modeBest.getRefreshRate(), Toast.LENGTH_LONG)
+                                    .show();
                     }
                 }
             }
@@ -695,7 +715,8 @@ class Utils {
         if (BuildConfig.FLAVOR_distribution.equals("amazon") && packageManager.hasSystemFeature(FEATURE_FIRE_TV)) {
             return false;
         }
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
     }
 
     public static Uri getMoviesFolderUri() {
@@ -769,7 +790,7 @@ class Utils {
         List<Map.Entry<K, V>> entries = new ArrayList<>(m.entrySet());
         Collections.sort(entries, (lhs, rhs) -> c.compare(lhs.getValue(), rhs.getValue()));
         m.clear();
-        for(Map.Entry<K, V> e : entries) {
+        for (Map.Entry<K, V> e : entries) {
             m.put(e.getKey(), e.getValue());
         }
     }
@@ -785,7 +806,7 @@ class Utils {
                 storagePaths.add(directory.getAbsolutePath());
             }
         }
-        MediaScannerConnection.scanFile(context, storagePaths.toArray(new String[0]), new String[]{"*/*"}, null);
+        MediaScannerConnection.scanFile(context, storagePaths.toArray(new String[0]), new String[] { "*/*" }, null);
     }
 
     public static float getFrameRate(Context context, Uri videoUri) {
