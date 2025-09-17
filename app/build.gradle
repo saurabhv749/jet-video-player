@@ -12,7 +12,7 @@ android {
         applicationId "com.brouken.player"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 197
+        versionCode 199
         versionName "0.${versionCode}"
         archivesBaseName = "Jet.Video.Player.v${versionName}"
         if (abiFilter) {
